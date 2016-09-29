@@ -14,18 +14,20 @@ class Application(object):
         Args:
             user (dict)         :   A dictionary consisting of the user's information.
             isConnected (bool)  :   A boolean value indicating whether the user is connected.
-            clientFactory (obj) :   The chat protocol factory.
             frame (obj)         :   The UI frame of the application.
+            mainLoop (obj)      :   The event loop.
+            clientFactory (obj) :   The chat protocol factory.
     """
-    user = dict(username=None, id=None)
-    isConnected = False
-    clientFactory = None
-    frame = None
-    mainLoop = None
+
+    user            = dict(username=None, id=None)
+    isConnected     = False
+    frame           = None
+    mainLoop        = None
+    clientFactory   = None
 
     def __init__(self):
         """
-            Init
+            Initializes the application and starts the event loop.
 
             Note:
                 Before anything else, the __preliminaries() method will be called,
@@ -41,10 +43,24 @@ class Application(object):
     ##########################
 
     def didConnect(self):
+        """
+            Invoked when the client has established a connection.
+        """
         self.isConnected = True
         self.frame.clearChatLog()
         self.frame.printToScreen("Successfully connected.", "bold-heading")
-        self.mainLoop.draw_screen()
+        self.shouldUpdateScreen()
+        self.frame.enableChatBox(True)
+
+    def didLoseConnection(self, reason):
+        self.frame.printToScreen("[ Error: %s]" % reason, "bold-heading")
+        self.shouldUpdateScreen()
+        self.isConnected = False
+
+    def didFailConnection(self, reason):
+        self.frame.printToScreen("[ Error: %s ]" % reason, "bold-heading")
+        self.shouldUpdateScreen()
+        self.frame.enableChatBox(True)
 
     def didReceiveReturnKeyEvent(self, parameter=None):
         """
@@ -61,12 +77,15 @@ class Application(object):
             return
 
         if isinstance(parameter, basestring):
-            if self.isConnected is False:
-                self.user["username"] = parameter
-                self.__makeConnection()
+            if parameter.startswith("/"):
+                self.__didReceiveCommand(parameter[1:])
             else:
-                if parameter.startswith("/"):
-                    self.__didReceiveCommand(parameter[1:])
+                if self.isConnected is False:
+                    if self.user["username"] == None:
+                        self.user["username"] = parameter
+                        self.__makeConnection()
+                    else:
+                        self.frame.printToScreen("[ Error: Not connected to the server. Use the /connect command. ]", "bold-heading")
                 else:
                     text = "%s: %s" % (self.user["username"], parameter)
                     self.frame.printToScreen(text)
@@ -96,11 +115,13 @@ class Application(object):
         """
         self.frame.printToScreen("Please enter your username...", "bold-heading")
         self.frame.setChatBoxCaption("Username: ")
+        self.frame.enableChatBox(True)
 
     def __makeConnection(self):
         """
             Attempts to connect to the server.
         """
+        self.frame.enableChatBox(False)
         self.frame.setChatBoxCaption("> ")
         self.frame.clearChatLog()
         self.frame.printToScreen("Welcome %s. Attempting to connect to the server..." % self.user["username"])
@@ -118,9 +139,21 @@ class Application(object):
             command = command.lower().split(" ")
             if command[0] == "exit":
                 raise urwid.ExitMainLoop()
+            elif command[0] == "help":
+                self.__showHelp()
             elif command[0] == "clear":
                 self.frame.clearChatLog()
             else:
                 self.frame.printToScreen("[ Error: command %s not found. ]" % (command[0]), "bold-heading")
         else:
             self.frame.printToScreen("[ Error: No command given. ]", "bold-heading")
+
+    def __showHelp(self):
+        text = "\n"
+        text += "ChatMaster 3000 commands:\n\n"
+        text += "/exit - quit the program\n"
+        text += "/clear - clear the chat log\n"
+        text += "/connect - connect to the server\n"
+        text += "/rename - Change username\n\n"
+        text += "/help - show this guide\n\n"
+        self.frame.printToScreen(text)

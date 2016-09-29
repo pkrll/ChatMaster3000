@@ -61,6 +61,13 @@ class WindowFrame(urwid.Frame):
         """
         self.chatLog.body[:] = []
 
+    def enableChatBox(self, mode):
+        self.chatBox.isSelectable = mode
+        if mode:
+            self.set_focus("footer")
+        else:
+            self.set_focus("body")
+
     def setChatBoxCaption(self, caption):
         """
             Sets the chat box caption

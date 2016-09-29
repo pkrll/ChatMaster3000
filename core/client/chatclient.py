@@ -25,3 +25,7 @@ class ChatClient(protocol.Protocol):
     def connectionMade(self):
         if self.delegate is not None:
             self.delegate.didConnect()
+
+    def connectionLost(self, reason):
+        if self.delegate is not None:
+            self.delegate.didLoseConnection(reason.getErrorMessage())

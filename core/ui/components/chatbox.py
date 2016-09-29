@@ -10,11 +10,18 @@ class ChatBox(urwid.Edit, Wrapper):
         to this class.
 
         Args:
-            caption (str)   :   The caption of the edit box.
-            delegate (obj)  :   The acting delegate.
+            isSelectable (bool) : Controls the widget is selectable or not.
     """
+    isSelectable = True
 
     def __init__(self, caption='', delegate=None):
+        """
+            Init
+
+            Args:
+                caption (str)   :   The caption of the edit box.
+                delegate (obj)  :   The acting delegate.
+        """
         self.delegate = delegate
         super(ChatBox, self).__init__(caption)
 
@@ -38,3 +45,12 @@ class ChatBox(urwid.Edit, Wrapper):
                 self.delegate.didReceiveArrowKeyEvent(key)
             else:
                 super(ChatBox, self).keypress(size, key)
+
+    def selectable(self):
+        """
+            Sets selectability of the widget.
+            
+            Returns:
+                A boolean that determines whether the box is selectable or not.
+        """
+        return self.isSelectable

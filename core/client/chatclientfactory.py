@@ -25,3 +25,9 @@ class ChatClientFactory(protocol.ClientFactory):
                 An instance of the chat client protocol.
         """
         return self.protocol(self.delegate)
+
+    def clientConnectionFailed(self, connector, reason):
+        """
+            Called when the connection has failed.
+        """
+        self.delegate.didFailConnection(reason.getErrorMessage())
