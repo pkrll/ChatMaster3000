@@ -7,3 +7,7 @@ defaultPalette = [
 ]
 
 serverInformation = dict(addr="localhost", port=9000)
+
+availableCommands = [
+    "exit", "help", "rename", "connect", "disconnect", "clear"
+]

@@ -2,7 +2,7 @@ import urwid
 from twisted.internet import reactor
 from core.client.chatclientfactory import ChatClientFactory
 from core.ui.windowframe import WindowFrame
-from support.const.globals import serverInformation, defaultPalette
+from support.const.globals import serverInformation, defaultPalette, availableCommands
 
 class Application(object):
     """
@@ -17,6 +17,7 @@ class Application(object):
             frame (obj)         :   The UI frame of the application.
             mainLoop (obj)      :   The event loop.
             clientFactory (obj) :   The chat protocol factory.
+            connector (obj)     :   A connector object.
     """
 
     user            = dict(username=None, id=None)
@@ -24,6 +25,7 @@ class Application(object):
     frame           = None
     mainLoop        = None
     clientFactory   = None
+    connector       = None
 
     def __init__(self):
         """
@@ -53,13 +55,11 @@ class Application(object):
         self.frame.enableChatBox(True)
 
     def didLoseConnection(self, reason):
-        self.frame.printToScreen("[ Error: %s]" % reason, "bold-heading")
-        self.shouldUpdateScreen()
+        self.__printError(reason)
         self.isConnected = False
 
     def didFailConnection(self, reason):
-        self.frame.printToScreen("[ Error: %s ]" % reason, "bold-heading")
-        self.shouldUpdateScreen()
+        self.__printError(reason)
         self.frame.enableChatBox(True)
 
     def didReceiveReturnKeyEvent(self, parameter=None):
@@ -85,7 +85,7 @@ class Application(object):
                         self.user["username"] = parameter
                         self.__makeConnection()
                     else:
-                        self.frame.printToScreen("[ Error: Not connected to the server. Use the /connect command. ]", "bold-heading")
+                        self.__printError("Not connected to the server. Use the /connect or /help command.")
                 else:
                     text = "%s: %s" % (self.user["username"], parameter)
                     self.frame.printToScreen(text)
@@ -124,8 +124,8 @@ class Application(object):
         self.frame.enableChatBox(False)
         self.frame.setChatBoxCaption("> ")
         self.frame.clearChatLog()
-        self.frame.printToScreen("Welcome %s. Attempting to connect to the server..." % self.user["username"])
-        reactor.connectTCP(serverInformation["addr"], serverInformation["port"], self.clientFactory)
+        self.frame.printToScreen("Attempting to connect to the server...")
+        self.connector = reactor.connectTCP(serverInformation["addr"], serverInformation["port"], self.clientFactory)
 
     def __didReceiveCommand(self, command):
         """
@@ -137,23 +137,76 @@ class Application(object):
         if len(command) > 0:
             # Turn to lower case and split its arguments
             command = command.lower().split(" ")
-            if command[0] == "exit":
-                raise urwid.ExitMainLoop()
-            elif command[0] == "help":
-                self.__showHelp()
-            elif command[0] == "clear":
-                self.frame.clearChatLog()
-            else:
-                self.frame.printToScreen("[ Error: command %s not found. ]" % (command[0]), "bold-heading")
+            if command[0] in availableCommands:
+                methodName = "__executeCommand" + command[0].capitalize()
+                # Must add the ugly prefix of _className because of the so called "private" accessor.
+                methodCall = getattr(self, "_"+self.__class__.__name__+methodName, None)
+                if methodCall is not None:
+                    methodCall(command[1:])
+                    return
+            self.__printError("Command %s not found." % command[0])
         else:
-            self.frame.printToScreen("[ Error: No command given. ]", "bold-heading")
+            self.__printError("No command given.")
 
-    def __showHelp(self):
+    def __printError(self, errorMessage, style="bold-heading"):
+        """
+            Print out an error message.
+
+            Args:
+                errorMessage (str)  : The error message to display.
+                style (str)         : The style.
+        """
+        self.frame.printToScreen("[ Error: %s]" % errorMessage, style)
+        self.shouldUpdateScreen()
+
+    def __executeCommandExit(self, parameter=None):
+        """
+            Quit the application.
+        """
+        raise urwid.ExitMainLoop()
+
+    def __executeCommandClear(self, parameter=None):
+        """
+            Clear the chat log.
+        """
+        self.frame.clearChatLog()
+
+    def __executeCommandConnect(self, parameter=None):
+        """
+            Connect to the server.
+
+            If already connected, alert the user.
+        """
+        if self.isConnected:
+            self.__printError("Connection already established. Please use /disconnect first.")
+        else:
+            self.__makeConnection()
+
+    def __executeCommandDisconnect(self, parameter=None):
+        """
+            Disconnect from the server.
+        """
+        if self.isConnected and self.connector is not None:
+            self.connector.disconnect()
+        else:
+            self.__printError("Not connected.")
+
+
+    def __executeCommandRename(self, parameter=None):
+        """
+            Sets a new username.
+
+            TODO: Let the server know of the name change. (Also, it should announce it)
+        """
+        pass
+
+    def __executeCommandHelp(self, parameter=None):
         text = "\n"
         text += "ChatMaster 3000 commands:\n\n"
         text += "/exit - quit the program\n"
         text += "/clear - clear the chat log\n"
         text += "/connect - connect to the server\n"
+        text += "/disconnect - disconnect from the server\n"
         text += "/rename - Change username\n\n"
-        text += "/help - show this guide\n\n"
+        text += "/help - show this guide\n"
         self.frame.printToScreen(text)
