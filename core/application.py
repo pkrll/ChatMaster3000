@@ -26,7 +26,7 @@ class Application(object):
     mainLoop        = None
     clientFactory   = None
     connector       = None
-        
+
     def __init__(self):
         """
             Initializes the application and starts the event loop.
@@ -39,6 +39,7 @@ class Application(object):
         self.__beginLoginProcess()
         self.mainLoop = urwid.MainLoop(self.frame, defaultPalette, event_loop=urwid.TwistedEventLoop())
         self.mainLoop.run()
+
 
     ##########################
     #   Event methods
@@ -138,7 +139,7 @@ class Application(object):
                 message (str)   :   The message to send.
         """
         if self.isConnected or self.connector is not None:
-            package = json.dumps({"username": self.user["username"], "message": message})
+            package = self.__createJSONPackage({"type": "message", "data": { "message": message, "username": self.user["username"] }})
             text = "%s: %s" % (self.user["username"], message)
             self.frame.printToScreen(text)
             # TODO: The server must be able to know who writes what? Create packages?
@@ -215,9 +216,16 @@ class Application(object):
         """
             Sets a new username.
 
-            TODO: Let the server know of the name change. (Also, it should announce it)
+            TODO: Let the server know of the name change. (Also, the server should announce it to all with a notification message)
         """
-        pass
+        if parameter is None and len(parameter) > 0:
+            return
+
+        data = self.__createJSONPackage({
+            "type": "command",
+            "data": { "command": "rename", "parameter": parameter[0] }
+        })
+        self.connector.transport.write(data)
 
     def __executeCommandHelp(self, parameter=None):
         text = "\n"
@@ -260,15 +268,27 @@ class Application(object):
             Handles requests from the server.
         """
         requestType = package["request"]
+        response = None
         if requestType == "username":
-            data = json.dumps({
+            response = self.__createJSONPackage({
                 "type": "command",
-                "data": { "command": "rename", "parameter": self.user["username"] }
+                "data": { "command": "login", "parameter": {"username": self.user["username"]} }
             })
-            self.connector.transport.write(data)
+
+        if response is not None:
+            self.connector.transport.write(response)
 
     def __handleDataOfTypeNotification(self, package):
         """
             Handles notifications from the server.
         """
-        pass
+        print package
+
+    def __createJSONPackage(self, data):
+        """
+            Returns a JSON package.
+
+            Args:
+                data (dict) :   A dictionary consisting of the data to JSONify.
+        """
+        return json.dumps(data)

@@ -63,6 +63,12 @@ class WindowFrame(urwid.Frame):
         self.chatLog.body[:] = []
 
     def enableChatBox(self, mode):
+        """
+            Enables or disables the chat box.
+
+            Args:
+                mode (bool) :   A bool representing whether the box should be enabled or not.
+        """
         self.chatBox.isSelectable = mode
         if mode:
             self.set_focus("footer")
@@ -100,6 +106,7 @@ class WindowFrame(urwid.Frame):
             Returns the local time.
         """
         timeStruct = time.localtime()
+        # A value below 10 will not include the leading 0.
         minute = str(timeStruct.tm_min) if timeStruct.tm_min > 10 else "0" + str(timeStruct.tm_min)
         hour = str(timeStruct.tm_hour) if timeStruct.tm_hour > 10 else "0" + str(timeStruct.tm_hour)
         return "%s:%s" % (hour, minute)
