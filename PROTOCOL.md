@@ -81,8 +81,10 @@ A list of possible notifications are shown [below](#data-types).
 * rename
 * join
 * leave
+
 ###### Requests
 * login
+
 ###### Notifications
 * user_joined
 * user_left
