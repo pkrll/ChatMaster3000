@@ -87,8 +87,7 @@ class Application(object):
                     else:
                         self.__printError("Not connected to the server. Use the /connect or /help command.")
                 else:
-                    text = "%s: %s" % (self.user["username"], parameter)
-                    self.frame.printToScreen(text)
+                    self.__sendMessage(parameter)
             self.frame.resetChatBox()
 
     def didReceiveArrowKeyEvent(self, parameter=None):
@@ -126,6 +125,22 @@ class Application(object):
         self.frame.clearChatLog()
         self.frame.printToScreen("Attempting to connect to the server...")
         self.connector = reactor.connectTCP(serverInformation["addr"], serverInformation["port"], self.clientFactory)
+
+    def __sendMessage(self, message):
+        """
+            Send a message to the server.
+
+            Args:
+                message (str)   :   The message to send.
+        """
+        if self.isConnected or self.connector is not None:
+            text = "%s: %s" % (self.user["username"], message)
+            self.frame.printToScreen(text)
+            # TODO: The server must be able to know who writes what? Create packages?
+            # or let the server keep track of the client connected...?
+            self.connector.transport.write(message)
+        else:
+            self.__printError("You must be connected.")
 
     def __didReceiveCommand(self, command):
         """
