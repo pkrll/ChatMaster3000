@@ -1,5 +1,7 @@
 import urwid, time
+from core.ui.components.columnview import ColumnView
 from core.ui.components.chatwindow import ChatWindow
+from core.ui.components.channellist import ChannelList
 from core.ui.components.chatbox import ChatBox
 from core.ui.components.titlebar import TitleBar
 from support.const.globals import defaultPalette
@@ -16,15 +18,23 @@ class WindowFrame(urwid.Frame):
         """
         self.delegate = delegate
         # Create the components of the frame:
+        self.titleBar = TitleBar(("titleBar", "ChatMaster 3000"), align="center")
         self.chatLog = ChatWindow()
         self.chatBox = ChatBox("> ", self)
-        self.titleBar = TitleBar(("bold-heading", "ChatMaster 3000"), align="center")
+        self.channelList = ChannelList()
+        self.channelList.body.insert(0, urwid.Text(("channelList-text-bold", "Channels:")))
         # Wrap them with a display attribute. This will enable color application.
-        header = self.titleBar.wrapWithAttribute("bold-heading")
+        header = self.titleBar.wrapWithAttribute("titleBar")
         footer = self.chatBox.wrapWithAttribute("footer")
-        body = self.chatLog.wrapWithAttribute("body")
+        chatLog = self.chatLog.wrapWithAttribute("body")
+        channelList = self.channelList.wrapWithAttribute("channelList")
+        # Create a border between the channel list and the chat log
+        channelListWithPadding = urwid.Padding(channelList, align="left", width=("relative", 95))
+        channelListWithPadding = urwid.AttrMap(channelListWithPadding, "border")
+        # Put them both in a columns widget
+        self.columnView = ColumnView([(15, channelListWithPadding), ('weight', 1, chatLog)])
         # Call the super class and let it handle the heavy lifting.
-        super(WindowFrame, self).__init__(body, header=header, footer=footer, focus_part='footer')
+        super(WindowFrame, self).__init__(self.columnView, header=header, footer=footer, focus_part='footer')
 
     def didReceiveReturnKeyEvent(self, parameter=None):
         """
