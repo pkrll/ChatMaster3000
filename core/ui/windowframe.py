@@ -1,4 +1,4 @@
-import urwid
+import urwid, time
 from core.ui.components.chatwindow import ChatWindow
 from core.ui.components.chatbox import ChatBox
 from core.ui.components.titlebar import TitleBar
@@ -50,6 +50,7 @@ class WindowFrame(urwid.Frame):
                 text    (string)   : The text to print out.
                 style   (string)   : The style of the text.
         """
+        message = "[%s] %s" % (self.__getLocalTime(), message)
         textWidget = urwid.Text((style, message))
         currentRow = self.__numberOfRows()
         self.chatLog.body.insert(currentRow, textWidget)
@@ -93,3 +94,12 @@ class WindowFrame(urwid.Frame):
                 The number of rows in the chat log.
         """
         return len(self.chatLog.body)
+
+    def __getLocalTime(self):
+        """
+            Returns the local time.
+        """
+        timeStruct = time.localtime()
+        minute = str(timeStruct.tm_min) if timeStruct.tm_min > 10 else "0" + str(timeStruct.tm_min)
+        hour = str(timeStruct.tm_hour) if timeStruct.tm_hour > 10 else "0" + str(timeStruct.tm_hour)
+        return "%s:%s" % (hour, minute)

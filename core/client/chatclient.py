@@ -1,4 +1,5 @@
 from twisted.internet import protocol
+import json
 
 class ChatClient(protocol.Protocol):
     """
@@ -29,3 +30,6 @@ class ChatClient(protocol.Protocol):
     def connectionLost(self, reason):
         if self.delegate is not None:
             self.delegate.didLoseConnection(reason.getErrorMessage())
+
+    def dataReceived(self, data):
+        self.delegate.didReceiveData(data)

@@ -1,4 +1,4 @@
-import urwid
+import urwid, json
 from twisted.internet import reactor
 from core.client.chatclientfactory import ChatClientFactory
 from core.ui.windowframe import WindowFrame
@@ -26,7 +26,7 @@ class Application(object):
     mainLoop        = None
     clientFactory   = None
     connector       = None
-
+        
     def __init__(self):
         """
             Initializes the application and starts the event loop.
@@ -61,6 +61,10 @@ class Application(object):
     def didFailConnection(self, reason):
         self.__printError(reason)
         self.frame.enableChatBox(True)
+
+    def didReceiveData(self, data):
+        data = json.loads(data)
+        self.__parseData(data)
 
     def didReceiveReturnKeyEvent(self, parameter=None):
         """
@@ -134,11 +138,12 @@ class Application(object):
                 message (str)   :   The message to send.
         """
         if self.isConnected or self.connector is not None:
+            package = json.dumps({"username": self.user["username"], "message": message})
             text = "%s: %s" % (self.user["username"], message)
             self.frame.printToScreen(text)
             # TODO: The server must be able to know who writes what? Create packages?
             # or let the server keep track of the client connected...?
-            self.connector.transport.write(message)
+            self.connector.transport.write(package)
         else:
             self.__printError("You must be connected.")
 
@@ -206,7 +211,6 @@ class Application(object):
         else:
             self.__printError("Not connected.")
 
-
     def __executeCommandRename(self, parameter=None):
         """
             Sets a new username.
@@ -225,3 +229,46 @@ class Application(object):
         text += "/rename - Change username\n\n"
         text += "/help - show this guide\n"
         self.frame.printToScreen(text)
+
+    def __parseData(self, package):
+        """
+            Parse the data received.
+
+            Args:
+                package (dict)  : The data sent.
+        """
+        methodName = package["type"].capitalize()
+        methodCall = getattr(self, "_"+self.__class__.__name__+"__handleDataOfType"+methodName, None)
+        if methodCall is not None:
+            methodCall(package["data"])
+
+    def __handleDataOfTypeMessage(self, package):
+        """
+            Handles messages sent from other users.
+
+            Args:
+                package (dict)  :   The message
+        """
+        username = package["username"]
+        message = package["message"]
+        text = "%s: %s" % (username, message)
+        self.frame.printToScreen(text)
+        self.shouldUpdateScreen()
+
+    def __handleDataOfTypeRequest(self, package):
+        """
+            Handles requests from the server.
+        """
+        requestType = package["request"]
+        if requestType == "username":
+            data = json.dumps({
+                "type": "command",
+                "data": { "command": "rename", "parameter": self.user["username"] }
+            })
+            self.connector.transport.write(data)
+
+    def __handleDataOfTypeNotification(self, package):
+        """
+            Handles notifications from the server.
+        """
+        pass
