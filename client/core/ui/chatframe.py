@@ -1,12 +1,14 @@
-import urwid, time
+import urwid
+from core.ui.basicframe import BasicFrame
 from core.ui.components.columnview import ColumnView
 from core.ui.components.chatwindow import ChatWindow
 from core.ui.components.channellist import ChannelList
 from core.ui.components.chatbox import ChatBox
 from core.ui.components.titlebar import TitleBar
+from support.helpers import localTime
 from support.const.globals import defaultPalette
 
-class WindowFrame(urwid.Frame):
+class ChatFrame(BasicFrame):
     """
         Represents the main window frame of the application, which will consist
         of a ListBox widget (ChatWindow), Edit (ChatBox) and Text (TitleBar).
@@ -34,7 +36,7 @@ class WindowFrame(urwid.Frame):
         # Put them both in a columns widget
         self.columnView = ColumnView([(15, channelListWithPadding), ('weight', 1, chatLog)])
         # Call the super class and let it handle the heavy lifting.
-        super(WindowFrame, self).__init__(self.columnView, header=header, footer=footer, focus_part='footer')
+        super(ChatFrame, self).__init__(self.columnView, header=header, footer=footer, focus_part='footer')
 
     def didReceiveReturnKeyEvent(self, parameter=None):
         """
@@ -60,11 +62,24 @@ class WindowFrame(urwid.Frame):
                 text    (string)   : The text to print out.
                 style   (string)   : The style of the text.
         """
-        message = "[%s] %s" % (self.__getLocalTime(), message)
+        time = localTime()
+        time = "%s:%s" % (time.hour, time.minutes)
+        message = "[%s] %s" % (time, message)
         textWidget = urwid.Text((style, message))
         currentRow = self.__numberOfRows()
         self.chatLog.body.insert(currentRow, textWidget)
         self.chatLog.focus_position = currentRow
+
+    def printErrorMessage(self, errorMessage, style="bold-heading"):
+        """
+            Print out an error message.
+
+            Args:
+                errorMessage (str)  : The error message to display.
+                style (str)         : The style.
+        """
+        self.printToScreen("Error: %s" % errorMessage, style)
+        self.delegate.shouldUpdateScreen()
 
     def clearChatLog(self):
         """
@@ -100,6 +115,20 @@ class WindowFrame(urwid.Frame):
         """
         self.chatBox.set_edit_text("")
 
+    def clearChannelList(self):
+        """
+        """
+        self.channelList.body[:] = []
+
+    def setChannelList(self, channels):
+        """
+        """
+        self.clearChannelList()
+        self.channelList.body.insert(0, urwid.Text(("channelList-text-bold", "Channels:")))
+        for channel in channels:
+            self.channelList.body.append(urwid.Text(("channelList-text", channel)))
+        self.delegate.shouldUpdateScreen()
+
     ##########################
     #   Semi-private methods
     ##########################
@@ -110,13 +139,3 @@ class WindowFrame(urwid.Frame):
                 The number of rows in the chat log.
         """
         return len(self.chatLog.body)
-
-    def __getLocalTime(self):
-        """
-            Returns the local time.
-        """
-        timeStruct = time.localtime()
-        # A value below 10 will not include the leading 0.
-        minute = str(timeStruct.tm_min) if timeStruct.tm_min > 10 else "0" + str(timeStruct.tm_min)
-        hour = str(timeStruct.tm_hour) if timeStruct.tm_hour > 10 else "0" + str(timeStruct.tm_hour)
-        return "%s:%s" % (hour, minute)

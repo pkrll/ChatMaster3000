@@ -1,7 +1,8 @@
-### Proposal for a communications protocol for the ChatMaster 3000
-This document will establish the communications protocol used by the **ChatMaster 3000**.
+# Proposal for a communications protocol for the ChatMaster 3000
 
-*The ChatMaster 3000 is a retro style chat application, mimicking the look of, we imagine, chat programs in the 1980s.*
+*__NOTE:__ This document may be subject to changes.*
+
+## Overview
 
 ### The Client
 The ChatMaster 3000 client is a fully text-based application, that runs in the terminal. The client has a simple user interface with a chat log and a message box.
@@ -25,8 +26,11 @@ Listed below are the different values the ``type`` attribute can have:
 { "type": "command", "data": {} }
 { "type": "request", "data": {} }
 { "type": "notification", "data": {} }
+{ "type": "session", "data": {} }
+{ "type": "error", "data": {} }
+
 ```
-The last two types are only used by the server.
+The last four types are only used by the server.
 
 ###### Message
 A message is a package sent from one user to others connected to the server. The ``data`` attribute consist of an array containing the message, like so:
@@ -39,13 +43,13 @@ A message is a package sent from one user to others connected to the server. The
 }
 ```
 ###### Command
-A command is a package sent from the user, meant to be read and interpreted by the server. The ``data`` attribute consist of an array, containing the command and a parameter, that can either be a value or a JSON array.
+A command is a package sent from the user, meant to be read and interpreted by the server. The ``data`` attribute consist of an array, containing the command and a JSON array.
 ```json
 {
   "type": "command",
   "data": {
     "command": "login",
-    "parameter": {
+    "parameters": {
       "username": "PythonMaster2K16"
     }
   }
@@ -64,7 +68,7 @@ A request is a package sent from the server to a client. The client sends back a
 ```
 A list of possible requests are shown [below](#data-types).
 ###### Notification
-A notification is a package sent from the server to all clients, as a means to notify everyone on the server and/or in a specific room of an event. The ``data`` attribute of a request consist of an array describing the event.
+A notification is a package sent from the server to all clients, as a means to notify everyone on the server and/or in a specific room of an event. The ``data`` attribute of a notification consist of an array describing the event.
 ```json
 {
   "type": "notification",
@@ -75,17 +79,80 @@ A notification is a package sent from the server to all clients, as a means to n
 }
 ```
 A list of possible notifications are shown [below](#data-types).
-#### Data Types
+###### Session
+A session is a package sent from the server to a client, when the connection has been established and the client is trying to join the server. The ``data`` attribute will contain a boolean, indicating whether the client successfully joined the server, a ``reason`` string on failure or a ``channels`` array on success.
+```json
+{
+  "type": "session",
+  "data": {
+    "status": 1,
+    "channels": ["Channel 1", "Channel 2"]
+  }
+}
+```
+###### Error
+An error is a package sent from the server to a client, when an error with a command occurs. The ``data`` attribute of an error consist of an array describing the error event, with the ``error_type`` attribute matching the command.
+```json
+{
+  "type": "error",
+  "data": {
+    "error_type": "private",
+    "message": "Channel cannot be set private."
+  }
+}
+```
+See the [commands](#data-types). list below for a list of possible errors.
+#### Package and Data Types
 ###### Commands
 * login
 * rename
 * join
 * leave
+* private
+* public
+* channels
 
 ###### Requests
 * login
 
 ###### Notifications
+* channel_list
 * user_joined
 * user_left
 * user_rename
+
+## The connection process
+When a client establishes connection with the server, the server will send a ``login`` request asking for the username. The client must respond with a command of same type ``login`` and in the ``parameter`` array supply the username, as shown below.
+
+###### Server request:
+```json
+{
+  "type": "request",
+  "data": {
+    "request": "login"
+  }
+}
+```
+
+###### Response:
+```json
+{
+  "type": "command",
+  "data": {
+    "command": "login",
+    "parameter": {
+      "username": "PythonMaster2K16"
+    }
+  }
+}
+```
+The server will send back a ``session`` message. The ``data`` attribute indicates if the user is allowed to join the server. If the username is already taken, the attribute ``status`` will have value of ``False``, effectively denying connection. Otherwise the server will send a ``True`` value.
+```json
+{
+  "type": "session",
+  "data": {
+    "status": 0,
+    "reason": "Username is already taken."
+  }
+}
+```

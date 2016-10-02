@@ -12,9 +12,13 @@ class ChatClientFactory(protocol.ClientFactory):
 
     protocol = ChatClient
     delegate = None
+    username = None
 
     def __init__(self, delegate=None):
         self.delegate = delegate
+
+    def setUsername(self, username):
+        self.username = username
 
     def buildProtocol(self, addr):
         """
@@ -24,7 +28,7 @@ class ChatClientFactory(protocol.ClientFactory):
             Returns:
                 An instance of the chat client protocol.
         """
-        return self.protocol(self.delegate)
+        return self.protocol(self.username, self.delegate)
 
     def clientConnectionFailed(self, connector, reason):
         """

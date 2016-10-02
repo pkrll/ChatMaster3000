@@ -1,5 +1,6 @@
 # The default color palette of the application
 defaultPalette = [
+    ("background", "white", "dark red"),
     ("titleBar", "white, bold", "black"),
     ("bold-heading", "white, bold", "dark red"),
     ('body', 'default', 'dark red'),
