@@ -1,6 +1,6 @@
 import json
 from twisted.internet import protocol
-from support.helpers import newMessage, newCommand
+from support.helpers import newCommand
 
 class ChatClient(protocol.Protocol):
     """
