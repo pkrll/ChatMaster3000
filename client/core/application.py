@@ -5,7 +5,7 @@ from core.ui.emptyframe import EmptyFrame
 from core.ui.loginframe import LoginFrame
 from core.ui.chatframe import ChatFrame
 from support.const.globals import serverInformation, defaultPalette, availableCommands
-from support.helpers import newMessage, newCommand
+from support.helpers import newMessage
 
 class Application(object):
     """
@@ -32,6 +32,11 @@ class Application(object):
 
     def __init__(self):
         """
+            Initializes the application and starts the event loop.
+
+            Note:
+                Before anything else, the __preliminaries() method will be called,
+                setting up the client factory.
         """
         self.__preliminaries()
         self.mainLoop = urwid.MainLoop(EmptyFrame("Welcome to ChatMaster 3000", self), defaultPalette, event_loop=urwid.TwistedEventLoop())
@@ -42,6 +47,14 @@ class Application(object):
 
     def didReceiveReturnKeyEvent(self, parameter=None):
         """
+            Reacts on return key events.
+
+            Invoked when the return key has been pressed.
+
+            Args:
+                parameter (str) :   The parameter sent along from the sending object.
+                                    In most cases, the sending object will be the chat
+                                    box, sending the user inputed string.
         """
         if parameter is None or not isinstance(parameter, basestring):
             return
@@ -62,34 +75,62 @@ class Application(object):
         pass
 
     def didConnect(self):
+        """
+            Invoked when the client has established a connection.
+        """
         self.isConnected = True
         self.__setFrame(EmptyFrame(["Connection established.", "Joining server..."]))
         time.sleep(1) # TODO: REMOVE ME
 
     def didJoinServer(self):
+        """
+            Invoked when the client has been allowed to join the server.
+        """
         self.__transitionToFrame(ChatFrame)
         self.frame.printToScreen("Successfully connected.", "bold-heading")
         self.shouldUpdateScreen()
         self.frame.enableChatBox(True)
 
     def didFailConnection(self, reason):
+        """
+            Called when the client fails to connect to the server.
+
+            Args:
+                reason (str)    :   The reason of the failure.
+        """
         self.isConnected = False
         self.__setFrame(EmptyFrame(["Connection failed.", "", reason], self))
         self.__transitionToFrame(LoginFrame, 2)
 
     def didLoseConnection(self, reason):
+        """
+            Invoked when the client loses connection.
+
+            Args:
+                reason (str)    :   The reason.
+        """
         self.isConnected = False
         self.__setFrame(EmptyFrame(["Connection lost.", "", reason], self))
         self.__transitionToFrame(LoginFrame, 2)
 
     def didReceiveMessage(self, message):
+        """
+            Invoked by the client when a new message has been received.
+
+            Args:
+                message (str)   :   The message.
+        """
         self.frame.printToScreen(message)
 
     def shouldUpdateScreen(self):
+        """
+            Redraws the screen.
+        """
         self.mainLoop.draw_screen()
 
     def shouldUpdateChannelList(self, channels):
         """
+            Update the channel list.
         """
         # Can't use isinstance because of shared superclass
         if str(self.frame.__class__) == str(ChatFrame):
@@ -97,6 +138,11 @@ class Application(object):
 
     def shouldSkipTransitionTimer(self):
         """
+            Skips the transition time for switching frames.
+
+            Note:
+                Will call the alarm handler callback before stopping
+                the alarm.
         """
         if self.alarmHandler is not None:
             self.alarmHandler.func()
@@ -144,6 +190,11 @@ class Application(object):
 
     def __transitionToFrame(self, newFrame, transitionInSeconds = 0):
         """
+            Transition to a new frame.
+
+            Args:
+                newFrame (obj)                  :   The frame to transition to.
+                transitionInSeconds (float)     :   Number of seconds before transition
         """
         if transitionInSeconds > 0:
             def exitFrame(loop, user_data=None):
@@ -241,6 +292,33 @@ class Application(object):
         # })
         #
         # self.connector.transport.write(data)
+
+    def __executeCommandJoin(self, parameter=None):
+        """
+            Joins a channel.
+
+            Args:
+                parameter str   :   The channel to join
+        """
+        pass
+
+    def __executeCommandLeave(self, parameter=None):
+        """
+            Leaves a channel.
+        """
+        pass
+
+    def __executeCommandPrivate(self, parameter=None):
+        """
+            Set a channel to private.
+        """
+        pass
+
+    def __executeCommandPublic(self, parameter=None):
+        """
+            Set a channel to public.
+        """
+        pass
 
     def __executeCommandHelp(self, parameter=None):
         text = "ChatMaster 3000 commands:\n"
