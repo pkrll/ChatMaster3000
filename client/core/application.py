@@ -5,7 +5,7 @@ from core.ui.emptyframe import EmptyFrame
 from core.ui.loginframe import LoginFrame
 from core.ui.chatframe import ChatFrame
 from support.const.globals import serverInformation, defaultPalette, availableCommands
-from support.helpers import newMessage
+from support.helpers import newMessage, newCommand
 
 class Application(object):
     """
@@ -178,8 +178,6 @@ class Application(object):
             package = newMessage(message)
             text = "%s: %s" % (self.clientFactory.username, message)
             self.frame.printToScreen(text)
-            # TODO: The server must be able to know who writes what? Create packages?
-            # or let the server keep track of the client connected...?
             self.connector.transport.write(package)
         else:
             self.frame.printErrorMessage("You must be connected.")
@@ -234,14 +232,14 @@ class Application(object):
         if len(command) > 0:
             # Turn to lower case and split its arguments
             command = command.lower().split(" ")
-            if command[0] in availableCommands:
-                methodName = "__executeCommand" + command[0].capitalize()
-                # Must add the ugly prefix of _className because of the so called "private" accessor.
-                methodCall = getattr(self, "_"+self.__class__.__name__+methodName, None)
-                if methodCall is not None:
-                    methodCall(command[1:])
-                    return
-            self.frame.printErrorMessage("Command %s not found." % command[0])
+            methodName = "__executeCommand" + command[0].capitalize()
+            # Must add the ugly prefix of _className because of the so called "private" accessor.
+            methodCall = getattr(self, "_"+self.__class__.__name__+methodName, None)
+            if methodCall is not None:
+                methodCall(command[1:])
+                return
+            else:
+                self.frame.printErrorMessage("Command %s not found." % command[0])
         else:
             self.frame.printErrorMessage("No command given.")
 
@@ -279,19 +277,15 @@ class Application(object):
 
     def __executeCommandRename(self, parameter=None):
         """
-            Sets a new username.
+            Requests a username change.
 
-            TODO: Let the server know of the name change. (Also, the server should announce it to all with a notification message)
+            Args:
+                parameter (str) : The new username.
         """
-        if parameter is None and len(parameter) > 0:
+        if parameter is None or not len(parameter) > 0:
             return
-
-        # data = self.__createJSONPackage({
-        #     "type": "command",
-        #     "data": { "command": "rename", "parameter": parameter[0] }
-        # })
-        #
-        # self.connector.transport.write(data)
+        data = newCommand("rename", parameter[0])
+        self.connector.transport.write(data)
 
     def __executeCommandJoin(self, parameter=None):
         """
@@ -300,32 +294,43 @@ class Application(object):
             Args:
                 parameter str   :   The channel to join
         """
-        pass
+        if parameter is None or not len(parameter) > 0:
+            return
+
+        data = newCommand("join", parameter[0])
+        self.connector.transport.write(data)
 
     def __executeCommandLeave(self, parameter=None):
         """
             Leaves a channel.
         """
-        pass
+        data = newCommand("leave")
+        self.connector.transport.write(data)
 
     def __executeCommandPrivate(self, parameter=None):
         """
             Set a channel to private.
         """
-        pass
+        data = newCommand("private")
+        self.connector.transport.write(data)
 
     def __executeCommandPublic(self, parameter=None):
         """
             Set a channel to public.
         """
-        pass
+        data = newCommand("public")
+        self.connector.transport.write(data)
 
     def __executeCommandHelp(self, parameter=None):
         text = "ChatMaster 3000 commands:\n"
-        text += "/exit - quit the program\n"
-        text += "/clear - clear the chat log\n"
         text += "/connect - connect to the server\n"
         text += "/disconnect - disconnect from the server\n"
-        text += "/rename - Change username\n"
+        text += "/rename [username] - change username\n"
+        text += "/join [channel] - join or create a channel\n"
+        text += "/leave - leave the current channel\n"
+        text += "/public - set the current channel to public\n"
+        text += "/private - set the current channel to private\n"
+        text += "/exit - quit the program\n"
+        text += "/clear - clear the chat log\n"
         text += "/help - show this guide"
         self.frame.printToScreen(text)

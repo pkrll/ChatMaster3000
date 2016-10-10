@@ -155,4 +155,14 @@ The server will send back a ``session`` message. The ``data`` attribute indicate
     "reason": "Username is already taken."
   }
 }
+
+{
+  "type": "session",
+  "data": {
+    "status": 1,
+    "channels": ["Channel1", "ChuckNorris", "Google"]
+  }
+}
+
+
 ```
