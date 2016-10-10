@@ -284,7 +284,7 @@ class Application(object):
         """
         if parameter is None or not len(parameter) > 0:
             return
-        data = newCommand("rename", parameter[0])
+        data = newCommand("rename", {"username": parameter[0]})
         self.connector.transport.write(data)
 
     def __executeCommandJoin(self, parameter=None):
@@ -297,7 +297,7 @@ class Application(object):
         if parameter is None or not len(parameter) > 0:
             return
 
-        data = newCommand("join", parameter[0])
+        data = newCommand("join", {"channel": parameter[0]})
         self.connector.transport.write(data)
 
     def __executeCommandLeave(self, parameter=None):

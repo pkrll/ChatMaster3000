@@ -97,20 +97,54 @@ An error is a package sent from the server to a client, when an error with a com
   "type": "error",
   "data": {
     "error_type": "private",
-    "message": "Channel cannot be set private."
+    "message": "Channel cannot be set to private."
   }
 }
 ```
-See the [commands](#data-types). list below for a list of possible errors.
+See the [commands](#data-types) list below for a list of possible errors.
 #### Package and Data Types
 ###### Commands
-* login
-* rename
-* join
-* leave
-* private
-* public
-* channels
+* [login](#login)
+* [rename](#rename)
+* [join](#join)
+* [leave](#leave)
+* [private](#private)
+* [public](#public)
+* [channels](#channels)
+
+####### login
+Sent as a response to a login request. Data parameter should include the username:
+```json
+  {"username": "someUserName"}
+```
+
+####### rename
+Request to change username to the specified username. Data parameter should include the username:
+
+```json
+  {"username": "someUserName"}
+```
+
+####### join
+Join or create a new channel. Data parameter should include the channel name:
+```json
+  {"channel": "someChannel"}
+```
+
+####### leave
+Leave the current channel.
+
+####### private
+
+Set current channel to private.
+
+####### public
+
+Set current channel to public.
+
+####### channels
+
+Get a list of public channels.
 
 ###### Requests
 * login
