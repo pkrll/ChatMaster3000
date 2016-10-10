@@ -7,6 +7,7 @@ from core.ui.components.chatbox import ChatBox
 from core.ui.components.titlebar import TitleBar
 from support.helpers import localTime
 from support.const.globals import defaultPalette
+from support.clock import Clock
 
 class ChatFrame(BasicFrame):
     """
@@ -20,7 +21,9 @@ class ChatFrame(BasicFrame):
         """
         self.delegate = delegate
         # Create the components of the frame:
-        self.titleBar = TitleBar(("titleBar", "ChatMaster 3000"), align="center")
+        titleBar = TitleBar(("titleBar", "ChatMaster 3000"), align="center")
+        clock = urwid.AttrMap(Clock(self.delegate, align="right"), "titleBar")
+        self.titleBar = ColumnView([('weight', 1, titleBar), (5, clock)])
         self.chatLog = ChatWindow()
         self.chatBox = ChatBox("> ", self)
         self.channelList = ChannelList()
