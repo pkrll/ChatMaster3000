@@ -23,7 +23,7 @@ class CMServer(Protocol):
             All new connections must be added to the factory, through
             the factory method addConnection().
         """
-        pass
+        CMServerFactory.addConnection(protocol)
 
     def connectionLost(self, reason):
         """
@@ -31,7 +31,7 @@ class CMServer(Protocol):
 
             Must call the factory method removeConnection().
         """
-        pass
+        CMServerFactory.removeConnection(protocol)
 
     def dataReceived(self, data):
         """
