@@ -25,7 +25,7 @@ class CMServerFactory(Factory):
             Args:
                 connection (obj) : A new connection.
         """
-        pass
+        connections.append(connection)
 
     def removeConnection(self, connection):
         """
@@ -34,7 +34,7 @@ class CMServerFactory(Factory):
             Args:
                 connection (obj) : The connection to remove.
         """
-        pass
+        connections.remove(connection)
 
     def getRooms(self):
         pass
