@@ -38,7 +38,8 @@ A message is a package sent from one user to others connected to the server. The
 {
   "type": "message",
   "data": {
-    "message": "Hello World!"
+    "message": "Hello World!",
+    "username": "SomeUser"
   }
 }
 ```
@@ -150,10 +151,17 @@ Get a list of public channels.
 * login
 
 ###### Notifications
-* channel_list
-* user_joined
-* user_left
-* user_rename
+**channel_list**
+Consists of a JSON object with data attributes: ```channels```.
+
+**user_joined**
+Consists of a JSON object with data attributes: ```username```.
+
+**user_left**
+Consists of a JSON object with data attributes: ```username```.
+
+**user_rename**
+Consists of a JSON object with data attributes: ```old_username``` and ```new_username```.
 
 ## The connection process
 When a client establishes connection with the server, the server will send a ``login`` request asking for the username. The client must respond with a command of same type ``login`` and in the ``parameter`` array supply the username, as shown below.

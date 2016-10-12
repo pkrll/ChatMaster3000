@@ -23,7 +23,14 @@ class LoginFrame(BasicFrame):
 
     def didReceiveReturnKeyEvent(self, parameter=None):
         """
+            Called from the subwidgets. Invoked when the
+            user presses the return key.
+
+            Args:
+                parameter (Any) :   Some parameter.
         """
+        # The parameter should be the text inside of the textbox
+        # Check for content and call the delegate.
         if parameter is not None and len(parameter) > 0:
             self.delegate.didReceiveReturnKeyEvent(parameter)
 

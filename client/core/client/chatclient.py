@@ -27,15 +27,33 @@ class ChatClient(protocol.Protocol):
         self.delegate = delegate
 
     def connectionMade(self):
+        """
+            Invoked when the client has successfully connected
+            to the server.
+
+            Will call the Application method didConnect().
+        """
         if self.delegate is not None:
             self.delegate.didConnect()
 
     def connectionLost(self, reason):
+        """
+            Invoked when the client has lost connection
+            to the server.
+
+            Args:
+                reason (obj) : A connectionDone object.
+        """
         if self.delegate is not None:
             self.delegate.didLoseConnection(reason.getErrorMessage())
 
     def dataReceived(self, data):
         """
+            Invoked when the client receives data from
+            the server.
+
+            Args:
+                data (str) : The data received.
         """
         package = json.loads(data)
         if "type" not in package:
@@ -77,6 +95,12 @@ class ChatClient(protocol.Protocol):
             self.transport.write(response)
 
     def __handleSession(self, package=None):
+        """
+            Handles session messages.
+
+            Args:
+                package (dict) :    The message.
+        """
         if package is None:
             return
 
@@ -89,12 +113,23 @@ class ChatClient(protocol.Protocol):
     def __handleNotification(self, package=None):
         """
             Handles notifications from the server.
+
+            Args:
+                package (dict) :    The message.
         """
         eventType = package["event_type"]
+        notification = None
+
         if eventType == "channel_list":
-            self.delegate.shouldUpdateChannelList(package["message"])
+            self.delegate.shouldUpdateChannelList(package["channels"])
         elif eventType == "user_joined":
             notification = "User %s has joined the room." % package["username"]
+        elif eventType == "user_left":
+            notification = "User %s left the room." % package["username"]
+        elif eventType == "user_rename":
+            notification = "User %s changed nickname to %s" % (package["old_username"], package["new_username"])
+
+        if notification is not None:
             self.delegate.didReceiveNotification(notification)
 
     def __handleError(self, package):
