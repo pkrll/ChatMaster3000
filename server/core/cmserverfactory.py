@@ -36,6 +36,24 @@ class CMServerFactory(Factory):
         """
         self.connections.remove(connection)
 
+    def didJoinRoom(self, room):
+        """
+            Invoked by the protocol when a user joins a room.
+
+            Should check if room exists in the rooms property.
+            If not, add it.
+        """
+        pass
+
+    def didLeaveRoom(self, room):
+        """
+            Invoked by the protocol when a user leaves a room.
+
+            Should check if the room is empty. If so, remove it
+            from the rooms property.
+        """
+        pass
+
     def getRooms(self):
         return self.rooms
 

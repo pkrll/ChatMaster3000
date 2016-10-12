@@ -39,6 +39,8 @@ class Application(object):
                 setting up the client factory.
         """
         self.__preliminaries()
+        # Initiate the main loop with a splash screen as the first widget.
+        # Use defaultPalette defined in globals, and the Twisted reactor loop.
         self.mainLoop = urwid.MainLoop(EmptyFrame("Welcome to ChatMaster 3000", self), defaultPalette, event_loop=urwid.TwistedEventLoop())
         self.mainLoop.screen.set_terminal_properties(colors=256)
 
