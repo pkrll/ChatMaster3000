@@ -25,7 +25,7 @@ class CMServerFactory(Factory):
             Args:
                 connection (obj) : A new connection.
         """
-        connections.append(connection)
+        self.connections.append(connection)
 
     def removeConnection(self, connection):
         """
@@ -37,7 +37,7 @@ class CMServerFactory(Factory):
         self.connections.remove(connection)
 
     def getRooms(self):
-        pass
+        return self.rooms
 
     def isUsernameUnique(self, username):
         """
@@ -55,9 +55,8 @@ class CMServerFactory(Factory):
         """
         for conn in self.connections:
             if username == conn.username:
-                return false
-            else:
-                return true
+                return False
+        return True
 
     def sendMessage(self, message, inRoom=None):
         """
