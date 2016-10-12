@@ -106,8 +106,18 @@ class CMServerFactory(Factory):
                 })
                 conn.transport.write(data)
 
-    def sendNotification(self, inRoom=None):
+    def sendNotification(self, event_type, username, inRoom=None):
         """
             Send a notification to users in a specific room.
         """
-        pass
+        users = self.connections
+        for conn in users:
+            if inRoom == conn.room:
+                data = json.dumps({
+                "type": "notification",
+                "data": {
+                "event_type": event_type,
+                "username": username
+                }
+                })
+                conn.transport.write(data)

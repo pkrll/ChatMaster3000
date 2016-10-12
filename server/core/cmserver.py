@@ -58,6 +58,7 @@ class CMServer(Protocol):
                 if nameUnique:
                     self.sendSession(nameUnique)
                     self.username = username
+                    self.factory.sendNotification("user_joined", username)
                 else:
                     self.sendSession(nameUnique, "Username is already taken")
         elif data["type"] == "message":
