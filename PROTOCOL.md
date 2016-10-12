@@ -113,37 +113,37 @@ See the [commands](#data-types) list below for a list of possible errors.
 * [public](#public)
 * [channels](#channels)
 
-####### login
+###### login
 Sent as a response to a login request. Data parameter should include the username:
 ```json
   {"username": "someUserName"}
 ```
 
-####### rename
+###### rename
 Request to change username to the specified username. Data parameter should include the username:
 
 ```json
   {"username": "someUserName"}
 ```
 
-####### join
+###### join
 Join or create a new channel. Data parameter should include the channel name:
 ```json
   {"channel": "someChannel"}
 ```
 
-####### leave
+###### leave
 Leave the current channel.
 
-####### private
+###### private
 
 Set current channel to private.
 
-####### public
+###### public
 
 Set current channel to public.
 
-####### channels
+###### channels
 
 Get a list of public channels.
 
@@ -151,16 +151,20 @@ Get a list of public channels.
 * login
 
 ###### Notifications
-**channel_list**
+**channel_list**:
+
 Consists of a JSON object with data attributes: ```channels```.
 
-**user_joined**
+**user_joined**:
+
 Consists of a JSON object with data attributes: ```username```.
 
-**user_left**
+**user_left**:
+
 Consists of a JSON object with data attributes: ```username```.
 
-**user_rename**
+**user_rename**:
+
 Consists of a JSON object with data attributes: ```old_username``` and ```new_username```.
 
 ## The connection process
