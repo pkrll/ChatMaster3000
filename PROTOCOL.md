@@ -174,7 +174,7 @@ When a client establishes connection with the server, the server will send a ``l
   "type": "command",
   "data": {
     "command": "login",
-    "parameter": {
+    "parameters": {
       "username": "PythonMaster2K16"
     }
   }

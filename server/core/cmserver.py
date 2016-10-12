@@ -24,6 +24,7 @@ class CMServer(Protocol):
             the factory method addConnection().
         """
         self.factory.addConnection(self)
+        self.sendRequest("login")
 
     def connectionLost(self, reason):
         """
@@ -49,7 +50,15 @@ class CMServer(Protocol):
             Args:
                 data (json) : The data received.
         """
-        pass
+        data = json.loads(data)
+        if data["type"] == "command":
+            if data["data"]["command"] == "login":
+                username = data["data"]["parameters"]["username"]
+                nameUnique = self.factory.isUsernameUnique(username)
+                if nameUnique:
+                    self.sendSession(nameUnique)
+                else:
+                    self.sendSession(nameUnique, "Username is already taken")
 
 
     def sendRequest(self, request):
@@ -59,7 +68,11 @@ class CMServer(Protocol):
             Args:
                 request (str) : The request to send.
         """
-        pass
+        data = json.dumps({
+        "type": "request",
+        "data": {"request": request}
+        })
+        self.transport.write(data)
 
     def sendSession(self, status, reason=None):
         """
@@ -84,13 +97,29 @@ class CMServer(Protocol):
             Args:
                 The status
         """
+        data = None
         if status is True:
             # Create session package
             # and retrieve channels list through appropriate factory method.
-            pass
+            rooms = self.factory.rooms
+            data = json.dumps({
+            "type": "session",
+            "data": {
+            "status": status,
+            "channels": rooms
+            }
+            })
         else:
             # Create session package
             # don't forget reason string
-            pass
+            data = json.dumps({
+            "type": "session",
+            "data": {
+            "status": status,
+            "reason": reason
+            }
+            })
+
+        self.transport.write(data)
 
         # Don't forget to send it!
