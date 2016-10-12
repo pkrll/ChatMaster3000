@@ -1,5 +1,6 @@
 from twisted.internet.protocol import Factory
 from core.cmserver import CMServer
+import json
 
 class CMServerFactory(Factory):
     """
@@ -76,7 +77,7 @@ class CMServerFactory(Factory):
                 return False
         return True
 
-    def sendMessage(self, message, inRoom=None):
+    def sendMessage(self, message, username, inRoom=None):
         """
             Send a message to the users in a specific room.
 
@@ -93,7 +94,17 @@ class CMServerFactory(Factory):
                 inRoom  (str)   :   The room the message should be
                                     routed to.
         """
-        pass
+        users = self.connections
+        for conn in users:
+            if inRoom == conn.room and username != conn.username:
+                data = json.dumps({
+                "type": "message",
+                "data": {
+                "message": message,
+                "username": username
+                }
+                })
+                conn.transport.write(data)
 
     def sendNotification(self, inRoom=None):
         """

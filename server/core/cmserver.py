@@ -57,8 +57,12 @@ class CMServer(Protocol):
                 nameUnique = self.factory.isUsernameUnique(username)
                 if nameUnique:
                     self.sendSession(nameUnique)
+                    self.username = username
                 else:
                     self.sendSession(nameUnique, "Username is already taken")
+        elif data["type"] == "message":
+            message = data["data"]["message"]
+            self.factory.sendMessage(message,self.username,  self.room)
 
 
     def sendRequest(self, request):
