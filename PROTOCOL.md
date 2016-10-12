@@ -104,7 +104,7 @@ An error is a package sent from the server to a client, when an error with a com
 ```
 See the [commands](#data-types) list below for a list of possible errors.
 #### Package and Data Types
-###### Commands
+##### Commands
 * [login](#login)
 * [rename](#rename)
 * [join](#join)
@@ -147,10 +147,10 @@ Set current channel to public.
 
 Get a list of public channels.
 
-###### Requests
+##### Requests
 * login
 
-###### Notifications
+##### Notifications
 **channel_list**:
 
 Consists of a JSON object with data attributes: ```channels```.
