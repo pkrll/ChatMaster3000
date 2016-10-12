@@ -58,7 +58,7 @@ class Application(object):
                                     In most cases, the sending object will be the chat
                                     box, sending the user inputed string.
         """
-        if parameter is None or not isinstance(parameter, basestring):
+        if parameter is None or len(parameter) == 0 or not isinstance(parameter, basestring):
             return
         # If the login screen is visible
         # Can't use isinstance of here, because LoginFrame and ChatFrame

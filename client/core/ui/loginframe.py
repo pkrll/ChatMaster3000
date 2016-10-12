@@ -29,10 +29,7 @@ class LoginFrame(BasicFrame):
             Args:
                 parameter (Any) :   Some parameter.
         """
-        # The parameter should be the text inside of the textbox
-        # Check for content and call the delegate.
-        if parameter is not None and len(parameter) > 0:
-            self.delegate.didReceiveReturnKeyEvent(parameter)
+        self.delegate.didReceiveReturnKeyEvent(parameter)
 
     def shouldUpdateScreen(self):
         self.delegate.shouldUpdateScreen()

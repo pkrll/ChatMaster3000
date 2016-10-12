@@ -33,6 +33,7 @@ class CMServer(Protocol):
             Must call the factory method removeConnection().
         """
         self.factory.removeConnection(self)
+        # TODO: Should send out a notification that the user has disconnected.
 
     def dataReceived(self, data):
         """
@@ -61,9 +62,12 @@ class CMServer(Protocol):
                     self.factory.sendNotification("user_joined", username)
                 else:
                     self.sendSession(nameUnique, "Username is already taken")
+            # TODO: Add more commands
         elif data["type"] == "message":
             message = data["data"]["message"]
             self.factory.sendMessage(message,self.username,  self.room)
+
+        # TODO: Add more package types
 
 
     def sendRequest(self, request):
