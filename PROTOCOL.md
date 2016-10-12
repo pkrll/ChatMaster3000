@@ -73,8 +73,8 @@ A notification is a package sent from the server to all clients, as a means to n
 {
   "type": "notification",
   "data": {
-    "event_type": "new_user",
-    "message": "User Foo has join the room Bar"
+    "event_type": "user_joined",
+    "username": "someUser"
   }
 }
 ```
