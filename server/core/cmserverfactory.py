@@ -112,7 +112,7 @@ class CMServerFactory(Factory):
         """
         users = self.connections
         for conn in users:
-            if inRoom == conn.room:
+            if inRoom == conn.room and conn.username != username:
                 data = json.dumps({
                 "type": "notification",
                 "data": {

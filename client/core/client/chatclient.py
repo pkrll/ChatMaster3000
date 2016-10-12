@@ -86,13 +86,16 @@ class ChatClient(protocol.Protocol):
         else:
             self.delegate.didFailConnection(package["reason"])
 
-    def __handleNotification(self, package):
+    def __handleNotification(self, package=None):
         """
             Handles notifications from the server.
         """
         eventType = package["event_type"]
         if eventType == "channel_list":
             self.delegate.shouldUpdateChannelList(package["message"])
+        elif eventType == "user_joined":
+            notification = "User %s has joined the room." % package["username"]
+            self.delegate.didReceiveNotification(notification)
 
     def __handleError(self, package):
         """

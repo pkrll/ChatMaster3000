@@ -124,6 +124,11 @@ class Application(object):
         """
         self.frame.printToScreen(message)
 
+    def didReceiveNotification(self, notification):
+        """
+        """
+        self.frame.printToScreen(notification, "bold-heading")
+
     def shouldUpdateScreen(self):
         """
             Redraws the screen.
