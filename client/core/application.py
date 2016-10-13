@@ -122,7 +122,12 @@ class Application(object):
             Args:
                 message (str)   :   The message.
         """
-        self.frame.printToScreen(message)
+        if message.find("@" + self.clientFactory.username) > -1:
+            style = "mention"
+        else:
+            style = "default"
+
+        self.frame.printToScreen(message, style)
 
     def didReceiveNotification(self, notification):
         """

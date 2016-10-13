@@ -9,6 +9,7 @@ defaultPalette = [
     ('channelList-text', 'black', 'light gray'),
     ('footer', 'white', 'black'),
     ('default', 'white', 'dark red'),
+    ('mention', 'yellow', 'dark red'),
     ('border','white','black')
 ]
 
