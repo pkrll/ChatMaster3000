@@ -123,11 +123,11 @@ class ChatFrame(BasicFrame):
         """
         self.channelList.body[:] = []
 
-    def setChannelList(self, channels):
+    def setChannelList(self, channels, title):
         """
         """
         self.clearChannelList()
-        self.channelList.body.insert(0, urwid.Text(("channelList-text-bold", "Channels:")))
+        self.channelList.body.insert(0, urwid.Text(("channelList-text-bold", title)))
         for channel in channels:
             self.channelList.body.append(urwid.Text(("channelList-text", channel)))
         self.delegate.shouldUpdateScreen()

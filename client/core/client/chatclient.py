@@ -121,11 +121,25 @@ class ChatClient(protocol.Protocol):
         notification = None
 
         if eventType == "channel_list":
-            self.delegate.shouldUpdateChannelList(package["channels"])
+            channels = package["parameters"]["channels"]
+            if channels is not None: # Prevent an infinite loop if something goes wrong
+                self.delegate.shouldUpdateChannelList(channels)
         elif eventType == "user_joined":
-            notification = "User %s has joined the room." % package["username"]
+            notification = "User %s has joined the channel %s." % (package["parameters"]["username"], package["parameters"]["channel"])
+            channelName = "%s:" % package["parameters"]["channel"]
+            self.delegate.shouldUpdateChannelList(package["parameters"]["current_users"], channelName)
         elif eventType == "user_left":
-            notification = "User %s left the room." % package["username"]
+            username = package["parameters"]["username"]
+            channelName = package["parameters"]["channel"]
+            allUsers = package["parameters"]["current_users"]
+            notification = "User %s left the channel %s." % (username, channelName)
+            # If it regards the current client, then the shouldUpdateChannelList method
+            # should be called without any parameters.
+            if username == self.username:
+                allUsers = None
+                channelName = None
+            
+            self.delegate.shouldUpdateChannelList(allUsers, channelName)
         elif eventType == "user_rename":
             notification = "User %s changed nickname to %s" % (package["old_username"], package["new_username"])
 
@@ -136,4 +150,7 @@ class ChatClient(protocol.Protocol):
         """
             Handles errors from the server
         """
-        pass
+        errorType = package["error_type"]
+        # No other error types implemented so far besides leave and join.
+        if errorType == "join" or errorType == "leave":
+            self.delegate.didReceiveNotification(package["message"])

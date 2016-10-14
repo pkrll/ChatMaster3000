@@ -7,11 +7,11 @@ class CMServer(Protocol):
 
         Args:
             username (str)  :   The username.
-            room     (str)  :   The room the client is currently in.
+            channel  (str)  :   The channel the client is currently in.
     """
 
     username = None
-    room = None
+    channel = None
 
     def __init__(self):
         pass
@@ -33,7 +33,7 @@ class CMServer(Protocol):
             Must call the factory method removeConnection().
         """
         self.factory.removeConnection(self)
-        self.factory.sendNotification("user_left", self.username, self.room)
+        self.factory.didLeaveChannel(self.channel, self.username)
         # TODO: Should send out a notification that the user has disconnected.
 
     def dataReceived(self, data):
@@ -43,8 +43,8 @@ class CMServer(Protocol):
             This method checks and parses the data received. The
             data can be either a message or a command package.
 
-            Messages should be rerouted to the right room, with the
-            server factory method sendMessage(message, inRoom).
+            Messages should be rerouted to the right channel, with the
+            server factory method sendMessage(message, toChannel).
 
             Commands should be handled appropriately. See PROTOCOL.md
             for available commands.
@@ -54,19 +54,39 @@ class CMServer(Protocol):
         """
         data = json.loads(data)
         if data["type"] == "command":
-            if data["data"]["command"] == "login":
+            command = data["data"]["command"]
+            if command == "login":
                 username = data["data"]["parameters"]["username"]
                 nameUnique = self.factory.isUsernameUnique(username)
                 if nameUnique:
                     self.sendSession(nameUnique)
                     self.username = username
-                    self.factory.sendNotification("user_joined", username)
                 else:
                     self.sendSession(nameUnique, "Username is already taken")
             # TODO: Add more commands
+            elif command == "channel_list":
+                self.sendChannelList()
+            elif command == "join":
+                channel = data["data"]["parameters"]["channel"]
+                if self.channel != channel:
+                    self.channel = data["data"]["parameters"]["channel"]
+                    self.factory.didJoinChannel(self.channel, self.username)
+                else:
+                    self.sendError(command, "You have already joined the channel.")
+            elif command == "leave":
+                if self.channel is not None:
+                    channel = self.channel
+                    # The channel must be set to None before calling didLeave Channel
+                    # as that method is sending out a notification to all users in the
+                    # channel.
+                    self.channel = None
+                    self.factory.didLeaveChannel(channel, self.username)
+                    self.sendChannelList()
+                else:
+                    self.sendError(command, "You are not in a channel.")
         elif data["type"] == "message":
             message = data["data"]["message"]
-            self.factory.sendMessage(message,self.username,  self.room)
+            self.factory.sendMessage(message, self.username, self.channel)
 
         # TODO: Add more package types
 
@@ -79,9 +99,12 @@ class CMServer(Protocol):
                 request (str) : The request to send.
         """
         data = json.dumps({
-        "type": "request",
-        "data": {"request": request}
+            "type": "request",
+            "data": {
+                "request": request
+            }
         })
+
         self.transport.write(data)
 
     def sendSession(self, status, reason=None):
@@ -99,7 +122,7 @@ class CMServer(Protocol):
 
             On success, the status attribute should be set to true,
             and the channels attribute consist of a list of public
-            rooms.
+            channels.
 
             On failure, the status attribute should be set to false,
             with a reason string.
@@ -111,25 +134,54 @@ class CMServer(Protocol):
         if status is True:
             # Create session package
             # and retrieve channels list through appropriate factory method.
-            rooms = self.factory.rooms
+            channels = self.factory.channels
             data = json.dumps({
-            "type": "session",
-            "data": {
-            "status": status,
-            "channels": rooms
-            }
+                "type": "session",
+                "data": {
+                    "status": status,
+                    "channels": channels
+                }
             })
         else:
             # Create session package
             # don't forget reason string
             data = json.dumps({
-            "type": "session",
-            "data": {
-            "status": status,
-            "reason": reason
-            }
+                "type": "session",
+                "data": {
+                    "status": status,
+                    "reason": reason
+                }
             })
 
         self.transport.write(data)
 
         # Don't forget to send it!
+
+    def sendError(self, errorType, message):
+        data = json.dumps({
+            "type": "error",
+            "data": {
+                "error_type": errorType,
+                "message": message
+            }
+        })
+        self.transport.write(data)
+
+    def sendNotification(self, event_type, parameters=[]):
+        """
+        """
+        data = json.dumps({
+            "type": "notification",
+            "data": {
+                "event_type": event_type,
+                "parameters": parameters
+            }
+        })
+
+        self.transport.write(data)
+
+    def sendChannelList(self):
+        """
+            Send the current channels list.
+        """
+        self.sendNotification("channel_list", {"channels": self.factory.channels})

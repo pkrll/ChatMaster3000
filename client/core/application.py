@@ -140,13 +140,19 @@ class Application(object):
         """
         self.mainLoop.draw_screen()
 
-    def shouldUpdateChannelList(self, channels):
+    def shouldUpdateChannelList(self, channels=None, title="Channels:"):
         """
             Update the channel list.
         """
         # Can't use isinstance because of shared superclass
         if str(self.frame.__class__) == str(ChatFrame):
-            self.frame.setChannelList(channels)
+            if channels is None:
+                # If called without a channels list, the client must
+                # first requests the channel list from the server.
+                self.__executeCommandChannels()
+            else:
+                # Otherwise, just update the list.
+                self.frame.setChannelList(channels, title)
 
     def shouldSkipTransitionTimer(self):
         """
@@ -317,6 +323,13 @@ class Application(object):
             Leaves a channel.
         """
         data = newCommand("leave")
+        self.connector.transport.write(data)
+
+    def __executeCommandChannels(self, parameter=None):
+        """
+            Update the channels list.
+        """
+        data = newCommand("channel_list")
         self.connector.transport.write(data)
 
     def __executeCommandPrivate(self, parameter=None):

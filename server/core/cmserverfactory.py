@@ -10,15 +10,16 @@ class CMServerFactory(Factory):
         Args:
             protocol    (obj)   :   The Server Protocol.
             connections (list)  :   A list of current connections
-            rooms       (list)  :   A list of current channels.
+            channels       (list)  :   A list of current channels.
     """
 
     protocol    = CMServer
     connections = []
-    rooms       = []
+    channels    = []
+    defaultChannels = ["general", "python"]
 
     def __init__(self):
-        pass
+        self.channels = self.defaultChannels[:]
 
     def addConnection(self, connection):
         """
@@ -38,23 +39,40 @@ class CMServerFactory(Factory):
         """
         self.connections.remove(connection)
 
-    def didJoinRoom(self, room):
+    def didJoinChannel(self, channel, username):
         """
-            Called when a user joins a room.
+            Called when a user joins a channel.
 
-            Should check if room exists in the rooms list. If
+            Should check if channel exists in the channels list. If
             not, add it.
         """
-        pass
+        users = []
+        if not channel in self.channels:
+            self.channels.append(channel)
+            users.append(username)
+        else:
+            for connection in self.connections:
+                if connection.channel == channel:
+                    users.append(connection.username)
 
-    def didLeaveRoom(self, room):
-        """
-            Called when a user leaves a room.
+        self.sendNotification("user_joined", channel, {"channel": channel, "username": username, "current_users": users})
 
-            Should check if the room is empty. If so, remove it
-            from the rooms list.
+    def didLeaveChannel(self, channel, username):
         """
-        pass
+            Called when a user leaves a channel.
+
+            Should check if the channel is empty. If so, remove it
+            from the channels list.
+        """
+        users = []
+        for connection in self.connections:
+            if connection.channel == channel:
+                users.append(connection.username)
+        if len(users) > 0:
+            self.sendNotification("user_left", channel, {"channel": channel, "username": username, "current_users": users})
+        elif channel not in self.defaultChannels:
+            # Remove the channel if no one is inside
+            self.channels.remove(channel)
 
     def isUsernameUnique(self, username):
         """
@@ -75,26 +93,26 @@ class CMServerFactory(Factory):
                 return False
         return True
 
-    def sendMessage(self, message, username, toRoom=None):
+    def sendMessage(self, message, username, toChannel=None):
         """
-            Send a message to the users in a specific room.
+            Send a message to the users in a specific channel.
 
             Note:
-                Method should check the which room the connections
+                Method should check the which channel the connections
                 (i.e. protocol objects) are inside, and only send
-                to the ones inside that room.
+                to the ones inside that channel.
 
                 A None value should route the message to users in
-                the general room.
+                the general channel.
 
             Args:
                 message (json)  :   The message to send.
-                toRoom  (str)   :   The room the message should be
-                                    routed to.
+                toChannel  (str):   The channel the message should
+                                    be routed to.
         """
         users = self.connections
         for conn in users:
-            if toRoom == conn.room and username != conn.username:
+            if toChannel == conn.channel and username != conn.username:
                 data = json.dumps({
                     "type": "message",
                     "data": {
@@ -102,27 +120,20 @@ class CMServerFactory(Factory):
                         "username": username
                     }
                 })
+
                 conn.transport.write(data)
 
-    def sendNotification(self, event_type, username, toRoom=None):
+    def sendNotification(self, event_type, toChannel=None, parameters=[]):
         """
-            Send a notification to users in a specific room.
+            Send a notification to users in a specific channel.
 
             Args:
                 event_type (str):   The event type.
                 username (str)  :   The user that triggered the notification
-                toRoom  (str)   :   The room the message should be routed to.
+                toChannel  (str):   The channel the message should be routed to.
         """
-        users = self.connections
-        for conn in users:
-            if toRoom == conn.room and conn.username != username:
-                data = json.dumps({
-                    "type": "notification",
-                    "data": {
-                        "event_type": event_type,
-                        "username": username
-                    }
-                })
-                conn.transport.write(data)
+        for conn in self.connections:
+            if toChannel == conn.channel:
+                conn.sendNotification(event_type, parameters)
 
     # TODO: Abstrahera mera. sendMessage och sendNotification har mycket gemensamt.
