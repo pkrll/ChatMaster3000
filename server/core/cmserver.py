@@ -33,8 +33,8 @@ class CMServer(Protocol):
             Must call the factory method removeConnection().
         """
         self.factory.removeConnection(self)
-        self.factory.didLeaveChannel(self.channel, self.username)
-        # TODO: Should send out a notification that the user has disconnected.
+        if self.channel is not None:
+            self.factory.didLeaveChannel(self.channel, self.username)
 
     def dataReceived(self, data):
         """
@@ -89,7 +89,6 @@ class CMServer(Protocol):
             self.factory.sendMessage(message, self.username, self.channel)
 
         # TODO: Add more package types
-
 
     def sendRequest(self, request):
         """
@@ -158,6 +157,9 @@ class CMServer(Protocol):
         # Don't forget to send it!
 
     def sendError(self, errorType, message):
+        """
+            Send an error message to the client.
+        """
         data = json.dumps({
             "type": "error",
             "data": {
@@ -169,12 +171,27 @@ class CMServer(Protocol):
 
     def sendNotification(self, event_type, parameters=[]):
         """
+            Send a notification to the client.
         """
         data = json.dumps({
             "type": "notification",
             "data": {
                 "event_type": event_type,
                 "parameters": parameters
+            }
+        })
+
+        self.transport.write(data)
+
+    def sendMessage(self, message, username):
+        """
+            Send a message to the client.
+        """
+        data = json.dumps({
+            "type": "message",
+            "data": {
+                "message": message,
+                "username": username
             }
         })
 

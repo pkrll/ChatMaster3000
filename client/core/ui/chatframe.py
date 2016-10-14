@@ -5,7 +5,6 @@ from core.ui.components.chatwindow import ChatWindow
 from core.ui.components.channellist import ChannelList
 from core.ui.components.chatbox import ChatBox
 from core.ui.components.titlebar import TitleBar
-from support.helpers import localTime
 from support.const.globals import defaultPalette
 from support.clock import Clock
 
@@ -21,11 +20,15 @@ class ChatFrame(BasicFrame):
         """
         self.delegate = delegate
         # Create the components of the frame:
+        # * The title and the clock in the header
         titleBar = TitleBar(("titleBar", "ChatMaster 3000"), align="center")
         clock = urwid.AttrMap(Clock(self.delegate, align="right"), "titleBar")
+        # The actual title bar. The title has a relative width, while clock has a set width of 5 columns wide.
         self.titleBar = ColumnView([('weight', 1, titleBar), (5, clock)])
+
         self.chatLog = ChatWindow()
         self.chatBox = ChatBox("> ", self)
+        # Create the channel list and set its label
         self.channelList = ChannelList()
         self.channelList.body.insert(0, urwid.Text(("channelList-text-bold", "Channels:")))
         # Wrap them with a display attribute. This will enable color application.
@@ -65,7 +68,7 @@ class ChatFrame(BasicFrame):
                 text    (string)   : The text to print out.
                 style   (string)   : The style of the text.
         """
-        time = localTime()
+        time = Clock.localTime()
         time = "%s:%s" % (time.hour, time.minutes)
         message = "[%s] %s" % (time, message)
         textWidget = urwid.Text((style, message))

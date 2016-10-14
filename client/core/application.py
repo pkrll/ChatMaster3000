@@ -42,8 +42,9 @@ class Application(object):
         # Initiate the main loop with a splash screen as the first widget.
         # Use defaultPalette defined in globals, and the Twisted reactor loop.
         self.mainLoop = urwid.MainLoop(EmptyFrame("Welcome to ChatMaster 3000", self), defaultPalette, event_loop=urwid.TwistedEventLoop())
+        # Put the screen into 256-color mode
         self.mainLoop.screen.set_terminal_properties(colors=256)
-
+        # Show the login screen
         self.__transitionToFrame(LoginFrame, 1)
         self.mainLoop.run()
 
@@ -60,9 +61,9 @@ class Application(object):
         """
         if parameter is None or len(parameter) == 0 or not isinstance(parameter, basestring):
             return
-        # If the login screen is visible
+        # Check if the login screen is visible:
         # Can't use isinstance of here, because LoginFrame and ChatFrame
-        # share the same base class.
+        # share the same base class, which according to Python makes them the same???
         if str(self.frame.__class__) == str(LoginFrame):
             if self.isConnected is False:
                 self.__makeConnection(parameter)
@@ -208,13 +209,18 @@ class Application(object):
         """
             Transition to a new frame.
 
+            Note:
+                If transitionInSeconds is not set, the transition will happen
+                instantly.
+
             Args:
                 newFrame (obj)                  :   The frame to transition to.
                 transitionInSeconds (float)     :   Number of seconds before transition
         """
         if transitionInSeconds > 0:
-            def exitFrame(loop, user_data=None):
+            def exitFrame(loop=None, user_data=None):
                 self.__setFrame(newFrame(self))
+            # Set an alarm with the above exitFrame(loop:user_data:) function as the callback.
             self.alarmHandler = self.mainLoop.set_alarm_in(transitionInSeconds, exitFrame)
         else:
             self.__setFrame(newFrame(self))
@@ -235,6 +241,7 @@ class Application(object):
         self.shouldUpdateScreen()
 
         del(lastUsedFrame) # Try to release it
+        # NOTE: Problem with reference cycles
 
     #
     #   Command Methods

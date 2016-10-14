@@ -10,7 +10,7 @@ class CMServerFactory(Factory):
         Args:
             protocol    (obj)   :   The Server Protocol.
             connections (list)  :   A list of current connections
-            channels       (list)  :   A list of current channels.
+            channels    (list)  :   A list of current channels.
     """
 
     protocol    = CMServer
@@ -66,11 +66,13 @@ class CMServerFactory(Factory):
         """
         users = []
         for connection in self.connections:
+            # Check if the channel is empty
             if connection.channel == channel:
                 users.append(connection.username)
         if len(users) > 0:
+            # Notify the users in the channel and send an updated users list
             self.sendNotification("user_left", channel, {"channel": channel, "username": username, "current_users": users})
-        elif channel not in self.defaultChannels:
+        elif channel not in self.defaultChannels and channel in self.channels:
             # Remove the channel if no one is inside
             self.channels.remove(channel)
 
@@ -113,15 +115,7 @@ class CMServerFactory(Factory):
         users = self.connections
         for conn in users:
             if toChannel == conn.channel and username != conn.username:
-                data = json.dumps({
-                    "type": "message",
-                    "data": {
-                        "message": message,
-                        "username": username
-                    }
-                })
-
-                conn.transport.write(data)
+                conn.sendMessage(message, username)
 
     def sendNotification(self, event_type, toChannel=None, parameters=[]):
         """

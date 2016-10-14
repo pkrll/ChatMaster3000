@@ -138,7 +138,7 @@ class ChatClient(protocol.Protocol):
             if username == self.username:
                 allUsers = None
                 channelName = None
-            
+
             self.delegate.shouldUpdateChannelList(allUsers, channelName)
         elif eventType == "user_rename":
             notification = "User %s changed nickname to %s" % (package["old_username"], package["new_username"])
